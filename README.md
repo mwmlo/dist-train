@@ -34,3 +34,18 @@ docker build -f Dockerfile -t dist-train:v0.1 .
 k3d image import dist-train:v0.1 --cluster distml
 kubectl create -f multi-worker-tfjob.yaml
 ```
+
+## Workflow
+
+```bash
+kubectl create -f workflow.yaml
+```
+
+### Debugging
+
+```bash
+kubectl create -f access-model.yaml 
+kubectl exec --stdin --tty access-model -- ls /trained_model
+# Manually copy
+# kubectl cp trained_model access-model:/pv/trained_model -c model-storage
+```
