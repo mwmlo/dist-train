@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "dist-train"
+version = "0.1.0"
+description = "A distributed system for ML training"
+authors = ["Michelle Lo <lomichelle42@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
