@@ -1,8 +1,8 @@
-FROM python:3.8
+FROM python:3.9
 
 # Install poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
-ENV PATH="~/.local/bin:$PATH" \
+ENV PATH="/root/.local/bin:$PATH" \
     POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_CREATE=false
 
