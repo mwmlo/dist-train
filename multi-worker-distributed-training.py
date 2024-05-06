@@ -5,7 +5,6 @@ import json
 import os
 
 import tensorflow as tf
-from tensorflow.keras import layers, models
 
 
 def make_datasets_unbatched():
@@ -101,8 +100,6 @@ def main(args):
 
 if __name__ == '__main__':
   os.environ['NCCL_DEBUG'] = 'INFO'
-
-  tfds.disable_progress_bar()
 
   # to decide if a worker is chief, get TASK_INDEX in Cluster info
   tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}')
