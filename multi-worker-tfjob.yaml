@@ -1,0 +1,30 @@
+apiVersion: kubeflow.org/v1
+kind: TFJob
+metadata:
+  name: multi-worker-training
+spec:
+  runPolicy:
+    cleanPodPolicy: None
+  tfReplicaSpecs:
+    Worker:
+      replicas: 2
+      restartPolicy: Never
+      template:
+        spec:
+          containers:
+            - name: tensorflow
+              image: dist-train:v0.1
+              imagePullPolicy: IfNotPresent
+              # TODO job command, e.g.
+              # command: ["python", "/multi-worker-distributed-training.py", "--saved_model_dir", "/trained_model/saved_model_versions/2/", "--checkpoint_dir", "/trained_model/checkpoint", "--model_type", "cnn"]
+              command: []
+              volumeMounts:
+                - mountPath: /trained_model
+                  name: training
+              resources:
+                limits:
+                  cpu: 500m
+          volumes:
+            - name: training
+              persistentVolumeClaim:
+                claimName: strategy-volume
