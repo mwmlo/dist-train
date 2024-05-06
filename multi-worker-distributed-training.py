@@ -4,7 +4,9 @@ import argparse
 import json
 import os
 
+import tensorflow_datasets as tfds
 import tensorflow as tf
+from tensorflow.keras import layers, models
 
 
 def make_datasets_unbatched():
@@ -12,14 +14,37 @@ def make_datasets_unbatched():
 
   # Preprocessing functions
   def preprocess(x, y):
-    pass
+    # pass
+    image = tf.cast(x, tf.float32)
+    image /= 255
+    return image, y
   
-  datasets = ...
+  # datasets = ...
+  datasets, _ = tfds.load(name='fashion_mnist', with_info=True, as_supervised=True)
   return datasets['train'].map(preprocess).cache().shuffle(BUFFER_SIZE)
 
 
 def build_and_compile_model():
-  pass
+  print("Training CNN model")
+  model = models.Sequential()
+  model.add(layers.Input(shape=(28, 28, 1), name='image_bytes'))
+  model.add(
+      layers.Conv2D(32, (3, 3), activation='relu'))
+  model.add(layers.MaxPooling2D((2, 2)))
+  model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+  model.add(layers.MaxPooling2D((2, 2)))
+  model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+  model.add(layers.Flatten())
+  model.add(layers.Dense(64, activation='relu'))
+  model.add(layers.Dense(10, activation='softmax'))
+
+  model.summary()
+
+  model.compile(optimizer='adam',
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+
+  return model
 
 def decay(epoch):
   if epoch < 3:
@@ -27,6 +52,18 @@ def decay(epoch):
   if 3 <= epoch < 7:
     return 1e-4
   return 1e-5
+
+def _preprocess(bytes_inputs):
+    decoded = tf.io.decode_jpeg(bytes_inputs, channels=1)
+    resized = tf.image.resize(decoded, size=(28, 28))
+    return tf.cast(resized, dtype=tf.uint8)
+
+def _get_serve_image_fn(model):
+    @tf.function(input_signature=[tf.TensorSpec([None], dtype=tf.string, name='image_bytes')])
+    def serve_image_fn(bytes_inputs):
+        decoded_images = tf.map_fn(_preprocess, bytes_inputs, dtype=tf.uint8)
+        return model(decoded_images)
+    return serve_image_fn
 
 def main(args):
 
@@ -96,6 +133,15 @@ def main(args):
     model_path = args.saved_model_dir + '/worker_tmp_' + str(TASK_INDEX)
 
   multi_worker_model.save(model_path)
+
+  signatures = {
+    "serving_default": _get_serve_image_fn(multi_worker_model).get_concrete_function(
+        tf.TensorSpec(shape=[None], dtype=tf.string, name='image_bytes')
+    )
+  }
+
+  # https://www.tensorflow.org/api_docs/python/tf/saved_model/save
+  tf.saved_model.save(multi_worker_model, model_path, signatures=signatures)
 
 
 if __name__ == '__main__':
