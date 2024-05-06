@@ -4,6 +4,12 @@ A distributed system for training ML models.
 
 ## Setup
 
+Apply custom manifests.
+
+```bash
+kubectl kustomize manifests | kubectl apply -f -
+```
+
 Training takes place in a Kubernetes cluster `distml`.
 
 ```bash
